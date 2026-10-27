@@ -28,6 +28,9 @@
                         'legal-last-name',
                         'email',
                         'secondary-email',
+                        'linkedin-username',
+                        'github-username',
+                        'personal-webpage',
                     ],
                     'labels': [
                         'Registration Section',
@@ -46,6 +49,9 @@
                         'Legal Family Name',
                         'Email',
                         'Secondary Email',
+                        'LinkedIn Username',
+                        'GitHub Username',
+                        'Personal Webpage',
                     ],
                     'cookie': 'active_student_columns',
                 },
@@ -152,6 +158,12 @@
                         {{ table_sort.sortable_table_header('student-table', 'Secondary Email', 'secondary_email', 'string') }}
                         {% set count = count + 1 %}
                     {% endif %}
+                    {% for index, label in {16: 'LinkedIn Username', 17: 'GitHub Username', 18: 'Personal Webpage'} %}
+                        {% if active_student_columns[index] %}
+                            {{ table_sort.sortable_table_header('student-table', label, ['linkedin_username', 'github_username', 'personal_webpage'][index - 16], 'string') }}
+                            {% set count = count + 1 %}
+                        {% endif %}
+                    {% endfor %}
                 </tr>
             </thead>
             {% for registration, students in sections %}
@@ -239,6 +251,19 @@
                             {% if active_student_columns[15] %}
                                 <td class="td-secondary-email">{{ student.getSecondaryEmail() }}</td>
                             {% endif %}
+                            {% for index, field in {16: 'linkedin_username', 17: 'github_username', 18: 'personal_webpage'} %}
+                                {% if active_student_columns[index] %}
+                                    <td class="td-{{ field|replace({'_': '-'}) }}" data-testid="{{ field|replace({'_': '-'}) }}-td">
+                                        {% set value = attribute(student, 'get' ~ field|split('_')|map(part => part|capitalize)|join('')) %}
+                                        {% if value is not empty and student.validateUserData(field, value) %}
+                                            {% set href = field == 'linkedin_username' ? 'https://www.linkedin.com/in/' ~ value|url_encode : (field == 'github_username' ? 'https://github.com/' ~ value|url_encode : value) %}
+                                            <a href="{{ href }}" target="_blank" rel="noopener noreferrer">{{ value }}</a>
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                            {% endfor %}
                         </tr>
                     {% endfor %}
                 </tbody>

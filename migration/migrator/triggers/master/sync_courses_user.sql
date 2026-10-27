@@ -62,6 +62,20 @@ CREATE OR REPLACE FUNCTION public.sync_courses_user() RETURNS trigger
                         || NEW.manual_registration || ', '
                         || quote_literal(user_row.display_name_order)
                     || ')';
+                    -- Courses can be migrated separately from master. Only reference the new
+                    -- columns after the target schema is ready; the course migration backfills them.
+                    query_string := query_string || format('; DO %L;', format($contact_sync$
+                    BEGIN
+                        IF (SELECT count(*) FROM information_schema.columns
+                            WHERE table_schema = 'public' AND table_name = 'users'
+                            AND column_name IN ('linkedin_username', 'github_username', 'personal_webpage')) = 3 THEN
+                            EXECUTE %L;
+                        END IF;
+                    END;
+                    $contact_sync$, format(
+                        'UPDATE public.users SET linkedin_username=%L, github_username=%L, personal_webpage=%L WHERE user_id=%L',
+                        user_row.linkedin_username, user_row.github_username, user_row.personal_webpage, user_row.user_id
+                    )));
                     IF query_string IS NULL THEN
                         RAISE EXCEPTION 'query_string error in trigger function sync_courses_user() when doing INSERT';
                     END IF;

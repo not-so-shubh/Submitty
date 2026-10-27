@@ -15,12 +15,14 @@ class UserProfileView extends AbstractView {
      * @param User $user
      * @param bool $database_authentication
      * @param string $csrf_token
+     * @param bool $can_edit_contact_info
      * @return string
      */
     public function showUserProfile(
         User $user,
         bool $database_authentication,
-        string $csrf_token
+        string $csrf_token,
+        bool $can_edit_contact_info
     ) {
         $this->output->addInternalJs('user-profile.js');
         $this->output->addInternalJs('authentication.js');
@@ -50,6 +52,7 @@ class UserProfileView extends AbstractView {
             "user_pronouns" => $user->getPronouns(),
             "display_pronouns" => $user->getDisplayPronouns(),
             "show_change_password" => $database_authentication,
+            "can_edit_contact_info" => $can_edit_contact_info,
             "csrf_token" => $csrf_token,
             "access_level" => Access::ACCESS_LEVELS[$user->getAccessLevel()],
             "display_access_level" => $user->accessFaculty(),

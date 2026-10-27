@@ -64,6 +64,9 @@ class UsersController extends AbstractController {
                 'user_id' => $student->getId(),
                 'email' => $student->getEmail(),
                 'secondary_email' => $student->getSecondaryEmail(),
+                'linkedin_username' => $student->getLinkedinUsername(),
+                'github_username' => $student->getGithubUsername(),
+                'personal_webpage' => $student->getPersonalWebpage(),
                 'utc_offset' => $student->getUTCOffset(),
                 'time_zone' => $student->getNiceFormatTimeZone(),
                 'reg_section' => $reg_sec,
@@ -74,19 +77,20 @@ class UsersController extends AbstractController {
         }
 
         // Get Active student Columns
-        $active_student_columns = '';
-        // Second argument in if statement checks if cookie has correct # of columns (to clear outdated lengths)
-        if (isset($_COOKIE['active_student_columns']) && count(explode('-', $_COOKIE['active_student_columns'])) == 16) {
-            $active_student_columns = $_COOKIE['active_student_columns'];
+        $saved_columns = $_COOKIE['active_student_columns'] ?? '';
+        // Keep the existing 16 preferences when adding the three optional columns.
+        if (preg_match('/\A[01](?:-[01]){15}\z/', $saved_columns) === 1) {
+            $active_student_columns = $saved_columns . '-0-0-0';
+        }
+        elseif (preg_match('/\A[01](?:-[01]){18}\z/', $saved_columns) === 1) {
+            $active_student_columns = $saved_columns;
         }
         else {
-            $default_columns = array_merge([1, 0], array_fill(0, 9, 1), array_fill(0, 5, 0));
-            $cookie_val = implode('-', $default_columns);
-
-            // Expires 10 years from today (functionally indefinite)
-            if (setcookie('active_student_columns', $cookie_val, time() + (10 * 365 * 24 * 60 * 60), '/')) {
-                $active_student_columns = $cookie_val;
-            }
+            $active_student_columns = implode('-', array_merge([1, 0], array_fill(0, 9, 1), array_fill(0, 8, 0)));
+        }
+        if ($active_student_columns !== $saved_columns) {
+            // Expires 10 years from today (functionally indefinite).
+            setcookie('active_student_columns', $active_student_columns, time() + (10 * 365 * 24 * 60 * 60), '/');
         }
 
         $can_rejoin = [];
@@ -1051,6 +1055,35 @@ class UsersController extends AbstractController {
         // First row in csv file are column titles
         $column_titles = array_shift($uploaded_data);
 
+        $encoding_column = array_search('CSV Encoding', $column_titles, true);
+        if ($encoding_column !== false) {
+            array_splice($column_titles, $encoding_column, 1);
+        }
+        // Unmarked files only permit decoding fields that cannot contain apostrophes.
+        // Marked exports escape original apostrophes too, making one-prefix decoding reversible.
+        $escaped_columns = [
+            'User ID' => 'user_id',
+            'Registration Section' => $list_type === 'graderlist' ? 'grading_assignments' : 'registration_section',
+            'Registration Subsection' => 'registration_subsection'
+        ];
+        foreach ($uploaded_data as $row_num => $vals) {
+            if ($encoding_column !== false) {
+                if (($vals[$encoding_column] ?? '') !== 'apostrophe-v1') {
+                    $this->core->addErrorMessage('Invalid CSV encoding. Expected apostrophe-v1 in every row.');
+                    $this->core->redirect($return_url);
+                }
+                array_splice($vals, $encoding_column, 1);
+                $uploaded_data[$row_num] = array_map(fn($value) => str_starts_with($value, "'") ? substr($value, 1) : $value, $vals);
+                continue;
+            }
+            foreach ($vals as $col_num => $value) {
+                $field = $escaped_columns[$column_titles[$col_num] ?? ''] ?? null;
+                if ($field !== null && preg_match("/\A' *-/", $value) === 1 && User::validateUserData($field, substr($value, 1))) {
+                    $uploaded_data[$row_num][$col_num] = substr($value, 1);
+                }
+            }
+        }
+
         // Find the column containing usernames
         $username_column = array_search("User ID", $column_titles, true);
         if ($username_column === false) {
@@ -1185,6 +1218,11 @@ class UsersController extends AbstractController {
                         break;
                     case "Rotation Section":
                         // Ignore Rotation Section column from exported lists.
+                        break;
+                    case "LinkedIn Username":
+                    case "GitHub Username":
+                    case "Personal Webpage":
+                        // Accept exported contact columns; only users may edit their profiles.
                         break;
                     case "Registration Section":
                         if ($list_type === "classlist") {
@@ -1425,6 +1463,11 @@ class UsersController extends AbstractController {
                         case "Rotation Section":
                             // Ignore Rotation Section column from exported lists.
                             break;
+                        case "LinkedIn Username":
+                        case "GitHub Username":
+                        case "Personal Webpage":
+                            // Accept exported contact columns; only users may edit their profiles.
+                            break;
                         case "Registration Section":
                             // Registration section has to exist, or a DB exception gets thrown on INSERT or UPDATE.
                             // ON CONFLICT clause in DB query prevents thrown exceptions when registration section already exists.
@@ -1539,6 +1582,11 @@ class UsersController extends AbstractController {
                             break;
                         case "Rotation Section":
                             // Ignore Rotation Section column from exported lists.
+                            break;
+                        case "LinkedIn Username":
+                        case "GitHub Username":
+                        case "Personal Webpage":
+                            // Accept exported contact columns; only users may edit their profiles.
                             break;
                         case "Registration Section":
                             // Registration section has to exist, or a DB exception gets thrown on INSERT or UPDATE.

@@ -1,0 +1,56 @@
+[
+    {
+        "code": "user",
+        "user": {
+            "user_id": "-student",
+            "given_name": "'-Given",
+            "family_name": "'-Family",
+            "email": "'-student@example.com",
+            "secondary_email": "'-personal@example.com",
+            "reg_section": "-section",
+            "reg_subsection": "-subsection",
+            "group": "Student"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group,LinkedIn Username,GitHub Username,Personal Webpage\n'-Given,'-Family,'-student,'-student@example.com,'-personal@example.com,,,\"'-section\",\"'-subsection\",,Student,,,\n"
+    },
+    {
+        "code": "grader",
+        "user": {
+            "user_id": "-grader",
+            "given_name": "'-Given",
+            "family_name": "'-Family",
+            "email": "'-grader@example.com",
+            "secondary_email": "'-personal@example.com",
+            "reg_section": "-section,other",
+            "reg_subsection": "-subsection",
+            "group": "Full Access Grader (Grad TA)"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group\n'-Given,'-Family,'-grader,'-grader@example.com,'-personal@example.com,,,\"'-section,other\",\"'-subsection\",,Full Access Grader (Grad TA)\n"
+    },
+    {
+        "code": "user",
+        "user": {
+            "user_id": "-1",
+            "given_name": "Student",
+            "family_name": "Example",
+            "email": "student@example.com",
+            "reg_section": "-",
+            "reg_subsection": "-1234567890123456789",
+            "group": "Student"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group,LinkedIn Username,GitHub Username,Personal Webpage\nStudent,Example,'-1,student@example.com,,,,\"'-\",\"'-1234567890123456789\",,Student,,,\n"
+    },
+    {
+        "code": "user",
+        "user": {
+            "user_id": "student-space",
+            "given_name": "Student",
+            "family_name": "Example",
+            "email": "student@example.com",
+            "reg_section": "1",
+            "reg_subsection": " -subsection",
+            "group": "Student"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group,LinkedIn Username,GitHub Username,Personal Webpage\nStudent,Example,student-space,student@example.com,,,,\"1\",\"' -subsection\",,Student,,,\n"
+    }
+]

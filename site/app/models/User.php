@@ -34,6 +34,12 @@ use Egulias\EmailValidator\Validation\RFCValidation;
  * @method void setEmail(string $email)
  * @method string getSecondaryEmail()
  * @method void setSecondaryEmail(string $email)
+ * @method string getLinkedinUsername()
+ * @method void setLinkedinUsername(string $username)
+ * @method string getGithubUsername()
+ * @method void setGithubUsername(string $username)
+ * @method string getPersonalWebpage()
+ * @method void setPersonalWebpage(string $url)
  * @method bool getEmailBoth()
  * @method void setEmailBoth(bool $flag)
  * @method int getGroup()
@@ -144,6 +150,16 @@ class User extends AbstractModel implements \JsonSerializable {
     /** @prop
      * @var string The secondary email of the user */
     protected $secondary_email;
+
+    /** @prop
+     * @var string The user's LinkedIn public profile identifier */
+    protected $linkedin_username = '';
+    /** @prop
+     * @var string The user's GitHub username */
+    protected $github_username = '';
+    /** @prop
+     * @var string The user's personal webpage URL */
+    protected $personal_webpage = '';
 
     /** @prop
      * @var string Determines whether or not user chose to receive emails to secondary email */
@@ -283,6 +299,9 @@ class User extends AbstractModel implements \JsonSerializable {
 
         $this->email = $details['user_email'];
         $this->secondary_email = $details['user_email_secondary'] ?? '';
+        $this->linkedin_username = $details['linkedin_username'] ?? '';
+        $this->github_username = $details['github_username'] ?? '';
+        $this->personal_webpage = $details['personal_webpage'] ?? '';
         $this->email_both = $details['user_email_secondary_notify'] ?? '';
         $this->group = isset($details['user_group']) ? intval($details['user_group']) : 4;
         if ($this->group > 4 || $this->group < 0) {
@@ -740,6 +759,35 @@ class User extends AbstractModel implements \JsonSerializable {
                 // validate email address against email RFCs
                 $validator = new EmailValidator();
                 return $validator->isValid($data, new RFCValidation());
+            case 'github_username':
+                // Public GitHub usernames: 1-39 alphanumerics with single internal hyphens.
+                return is_string($data) && ($data === '' || (strlen($data) <= 39
+                    && preg_match('/\A[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*\z/', $data) === 1));
+            case 'linkedin_username':
+                // Accept public profile identifiers, including LinkedIn's assigned hyphenated identifiers.
+                return is_string($data) && ($data === ''
+                    || preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9-]{1,98}[a-zA-Z0-9]\z/', $data) === 1);
+            case 'personal_webpage':
+                if (!is_string($data)) {
+                    return false;
+                }
+                if ($data === '') {
+                    return true;
+                }
+                if (
+                    strlen($data) > 2048 || filter_var($data, FILTER_VALIDATE_URL) === false
+                    || preg_match('/[\x00-\x20\x7f<>"\x27]/', $data) === 1 || str_contains($data, '\\')
+                    || preg_match('/%(?![a-fA-F0-9]{2})/', $data) === 1
+                ) {
+                    return false;
+                }
+                // parse_url() omits an explicitly empty port, so inspect the original authority.
+                if (preg_match('~\Ahttps?://[^/?#]*:(?:[/?#]|\z)~i', $data) === 1) {
+                    return false;
+                }
+                $parts = parse_url($data);
+                return $parts !== false && isset($parts['host']) && !isset($parts['user']) && !isset($parts['pass'])
+                    && in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true);
             case 'user_group':
                 //user_group check is either a digit between 1 - 4 or one of the strings:
                 // "Instructor"
@@ -870,6 +918,16 @@ class User extends AbstractModel implements \JsonSerializable {
             $this->instructor_courses = $this->core->getQueries()->getInstructorLevelAccessCourse($this->id);
         }
         return $this->instructor_courses;
+    }
+
+    /**
+     * Contact information is exposed explicitly by instructor reports, not generic user serialization.
+     * @return array<string, mixed>
+     */
+    public function toArray() {
+        $data = parent::toArray();
+        unset($data['linkedin_username'], $data['github_username'], $data['personal_webpage']);
+        return $data;
     }
 
     /**

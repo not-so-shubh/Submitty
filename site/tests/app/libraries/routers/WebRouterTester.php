@@ -11,6 +11,23 @@ use Symfony\Component\HttpFoundation\Request;
  * @preserveGlobalState disabled
  */
 class WebRouterTester extends BaseUnitTest {
+    public function testContactInfoRequiresLogin(): void {
+        $core = $this->createMockCore(['logged_in' => false]);
+        $request = Request::create('/user_profile/change_contact_info', 'POST');
+        $response = WebRouter::getWebResponse($request, $core);
+        $this->assertSame(
+            $core->buildUrl(['authentication', 'login']) . '?old=' . urlencode($request->getUriForPath('/user_profile/change_contact_info')),
+            $response->redirect_response->url
+        );
+    }
+
+    public function testContactInfoRequiresCsrfToken(): void {
+        $core = $this->createMockCore(['csrf_token' => false, 'logged_in' => true]);
+        $_SERVER['CONTENT_LENGTH'] = 0;
+        $response = WebRouter::getWebResponse(Request::create('/user_profile/change_contact_info', 'POST'), $core);
+        $this->assertSame('Invalid CSRF token.', $response->json_response->json['message']);
+    }
+
     public function testLogin() {
         $core = $this->createMockCore(['logged_in' => false]);
         $request = Request::create(

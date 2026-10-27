@@ -12,6 +12,56 @@ class UserTester extends \PHPUnit\Framework\TestCase {
         $this->core = $this->createMock(Core::class);
     }
 
+    public function testOptionalContactDefaultsAndValidation(): void {
+        $user = new User($this->core);
+        $this->assertSame('', $user->getLinkedinUsername());
+        $this->assertSame('', $user->getGithubUsername());
+        $this->assertSame('', $user->getPersonalWebpage());
+        $valid = [
+            'github_username' => ['', 'a', 'octo-cat', str_repeat('a', 39)],
+            'linkedin_username' => ['', 'abc', 'student-name-123', str_repeat('a', 100)],
+            'personal_webpage' => ['', 'http://example.com', 'HTTPS://example.com/a?x=1&y=2#portfolio', 'https://example.com/%E2%9C%93',
+                'http://example.com/', 'https://example.com/', 'https://example.com:443/', 'http://example.com:8080/path',
+                'https://[::1]/path', 'https://[::1]:8080/path', 'https://example.com/path:part',
+                'https://example.com/?q=one:two', 'https://example.com/#part:two',
+                'hTtPs://example.com/path:part?q=one:two#part:two']
+        ];
+        $invalid = [
+            'github_username' => ['-name', 'name-', 'a--b', 'a_b', '@name', 'https://github.com/name', str_repeat('a', 40), "name\n", [], null],
+            'linkedin_username' => ['ab', '-abc', 'abc-', 'a/b', 'a b', 'a?b', str_repeat('a', 101), "abc\n", [], null],
+            'personal_webpage' => ['javascript:alert(1)', 'data:text/html,test', 'ftp://example.com', '//example.com',
+                'https://', 'example.com', 'https://user:pass@example.com', 'https://example.com/has space',
+                "https://example.com/\nnext", 'https://example.com/"quoted', 'https://example.com/\\path',
+                'https://example.com/%zz', 'https://example.com/' . str_repeat('a', 2048), [], null,
+                'http://example.com:/', 'https://example.com:/', 'http://example.com:/path', 'https://example.com:/path',
+                'https://example.com:?q=1', 'https://example.com:#portfolio', 'https://example.com:',
+                'https://[::1]:/path', 'https://[::1]:?q=1', 'https://[::1]:#portfolio', 'https://[::1]:',
+                'HtTpS://example.com:/path']
+        ];
+        foreach ($valid as $field => $values) {
+            foreach ($values as $value) {
+                $this->assertTrue(User::validateUserData($field, $value), $field . ': ' . $value);
+            }
+        }
+        foreach ($invalid as $field => $values) {
+            foreach ($values as $value) {
+                $this->assertFalse(User::validateUserData($field, $value), $field . ': ' . json_encode($value));
+            }
+        }
+    }
+
+    public function testContactInfoExcludedFromGenericSerialization(): void {
+        $user = new User($this->core);
+        $user->setId('student');
+        $user->setLinkedinUsername('student-name');
+        $user->setGithubUsername('student-code');
+        $user->setPersonalWebpage('https://example.com');
+        foreach (['linkedin_username', 'github_username', 'personal_webpage'] as $field) {
+            $this->assertArrayNotHasKey($field, $user->toArray());
+            $this->assertArrayNotHasKey($field, $user->jsonSerialize());
+        }
+    }
+
     public function testUserNoPreferred() {
         $details = [
             'user_id' => "test",

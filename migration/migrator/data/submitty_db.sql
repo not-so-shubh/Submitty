@@ -146,6 +146,20 @@ CREATE FUNCTION public.sync_courses_user() RETURNS trigger
                         || NEW.manual_registration || ', '
                         || quote_literal(user_row.display_name_order)
                     || ')';
+                    -- Courses can be migrated separately from master. Only reference the new
+                    -- columns after the target schema is ready; the course migration backfills them.
+                    query_string := query_string || format('; DO %L;', format($contact_sync$
+                    BEGIN
+                        IF (SELECT count(*) FROM information_schema.columns
+                            WHERE table_schema = 'public' AND table_name = 'users'
+                            AND column_name IN ('linkedin_username', 'github_username', 'personal_webpage')) = 3 THEN
+                            EXECUTE %L;
+                        END IF;
+                    END;
+                    $contact_sync$, format(
+                        'UPDATE public.users SET linkedin_username=%L, github_username=%L, personal_webpage=%L WHERE user_id=%L',
+                        user_row.linkedin_username, user_row.github_username, user_row.personal_webpage, user_row.user_id
+                    )));
                     IF query_string IS NULL THEN
                         RAISE EXCEPTION 'query_string error in trigger function sync_courses_user() when doing INSERT';
                     END IF;
@@ -361,6 +375,20 @@ CREATE FUNCTION public.sync_user() RETURNS trigger
                     || 'user_updated=' || quote_literal(NEW.user_updated) || ', '
                     || 'instructor_updated=' || quote_literal(NEW.instructor_updated)
                 || ' WHERE user_id=' || quote_literal(NEW.user_id);
+                -- Courses can be migrated separately from master. Only reference the new
+                -- columns after the target schema is ready; the course migration backfills them.
+                query_string := query_string || format('; DO %L;', format($contact_sync$
+                BEGIN
+                    IF (SELECT count(*) FROM information_schema.columns
+                        WHERE table_schema = 'public' AND table_name = 'users'
+                        AND column_name IN ('linkedin_username', 'github_username', 'personal_webpage')) = 3 THEN
+                        EXECUTE %L;
+                    END IF;
+                END;
+                $contact_sync$, format(
+                    'UPDATE public.users SET linkedin_username=%L, github_username=%L, personal_webpage=%L WHERE user_id=%L',
+                    NEW.linkedin_username, NEW.github_username, NEW.personal_webpage, NEW.user_id
+                )));
                 -- Need to make sure that query_string was set properly as dblink_exec will happily take a null and then do nothing
                 IF query_string IS NULL THEN
                     RAISE EXCEPTION 'query_string error in trigger function sync_user()';
@@ -747,6 +775,9 @@ CREATE TABLE public.users (
     display_pronouns boolean DEFAULT false,
     user_preferred_locale character varying,
     date_format character varying(3) DEFAULT 'YMD'::character varying,
+    linkedin_username character varying(100) DEFAULT ''::character varying NOT NULL,
+    github_username character varying(39) DEFAULT ''::character varying NOT NULL,
+    personal_webpage character varying(2048) DEFAULT ''::character varying NOT NULL,
     CONSTRAINT user_preferred_familyname_not_empty CHECK (((user_preferred_familyname)::text <> ''::text)),
     CONSTRAINT user_preferred_givenname_not_empty CHECK (((user_preferred_givenname)::text <> ''::text)),
     CONSTRAINT users_user_access_level_check CHECK (((user_access_level >= 1) AND (user_access_level <= 3))),

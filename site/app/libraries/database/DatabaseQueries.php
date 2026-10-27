@@ -1039,6 +1039,13 @@ SQL;
         );
     }
 
+    public function updateUserContactInfo(User $user): void {
+        $this->submitty_db->query(
+            'UPDATE users SET linkedin_username=?, github_username=?, personal_webpage=? WHERE user_id=?',
+            [$user->getLinkedinUsername(), $user->getGithubUsername(), $user->getPersonalWebpage(), $user->getId()]
+        );
+    }
+
     /**
      * @param User $user
      * @param string|null $semester
@@ -6044,6 +6051,17 @@ AND gc_id IN (
     }
 
     /**
+     * Whether the user has a recorded student enrollment, including past or dropped courses.
+     */
+    public function hasStudentEnrollment(string $user_id): bool {
+        $this->submitty_db->query(
+            'SELECT 1 FROM courses_users WHERE user_id=? AND user_group=? LIMIT 1',
+            [$user_id, User::GROUP_STUDENT]
+        );
+        return $this->submitty_db->getRowCount() > 0;
+    }
+
+    /**
      * Returns true if the student was ever in the course,
      * even if they are in the null section now.
      * @param string $user_id The name of the user.
@@ -9158,6 +9176,9 @@ WHERE current_state IN
               u.user_email,
               u.user_email_secondary,
               u.user_email_secondary_notify,
+              u.linkedin_username,
+              u.github_username,
+              u.personal_webpage,
               u.user_group,
               u.manual_registration,
               u.last_updated,

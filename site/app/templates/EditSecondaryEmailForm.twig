@@ -3,7 +3,7 @@
 {% block title %}Edit Secondary Email (Optional){% endblock %}
 {% block body %}
     <p class="std-margin">
-       Your <em>primary email address</em> is most likely an email account affilitiated
+       Your <em>primary email address</em> is most likely an email account affiliated
        with your educational institution.
        Contact your instructor or system administrator if you need to modify the primary email
        address associated with your Submitty account.
@@ -11,7 +11,9 @@
 
     <p class="std-margin">
        You are invited to optionally add a <em>secondary email address</em> to your Submitty account.
-       This email address will be shared with your instructors.
+       We recommend a permanent personal email address that is not tied to your educational
+       institution or current employer. Instructors from all your past, present, and future
+       courses may access this email address.
     </p>
     <div class="flex-col" id="user_settings_modal">
         <input id="user-secondary-email-csrf" type="hidden" name="csrf_token" value="{{ csrf_token }}" />

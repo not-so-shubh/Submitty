@@ -52,6 +52,15 @@
 #student-table .td-secondary-email::before {
     content: "Secondary Email";
 }
+#student-table .td-linkedin-username::before {
+    content: "LinkedIn Username";
+}
+#student-table .td-github-username::before {
+    content: "GitHub Username";
+}
+#student-table .td-personal-webpage::before {
+    content: "Personal Webpage";
+}
 
 #grader-table td:nth-of-type(1) {
     display: none;

@@ -6,6 +6,7 @@ use app\libraries\FileUtils;
 use app\libraries\Utils;
 use app\models\gradeable\Gradeable;
 use app\models\RainbowCustomization;
+use app\models\RainbowCustomizationJSON;
 use tests\BaseUnitTest;
 
 class RainbowCustomizationTester extends BaseUnitTest {
@@ -22,6 +23,27 @@ class RainbowCustomizationTester extends BaseUnitTest {
 
     protected function tearDown(): void {
         FileUtils::recursiveRmdir($this->tmp_dir);
+    }
+
+    public function testContactDisplayOptionsAreOptionalAndPersist(): void {
+        $core = $this->createMockCore(['course_path' => $this->course_path]);
+        $fields = ['linkedin_username', 'github_username', 'personal_webpage'];
+        $options = array_column((new RainbowCustomization($core))->getDisplay(), 'isUsed', 'id');
+        foreach ($fields as $field) {
+            $this->assertFalse($options[$field]);
+        }
+        $this->assertCount(count(RainbowCustomizationJSON::allowed_display), RainbowCustomizationJSON::allowed_display_description);
+
+        $json = new RainbowCustomizationJSON($core);
+        $json->saveToJsonFile();
+        $this->assertSame(['grade_summary', 'grade_details'], $json->getDisplay());
+        foreach ($fields as $field) {
+            $json->addDisplay($field);
+        }
+        $json->saveToJsonFile();
+        $saved = new RainbowCustomizationJSON($core);
+        $saved->loadFromJsonFile();
+        $this->assertSame(['grade_summary', 'grade_details', ...$fields], $saved->getDisplay());
     }
 
     public function testBuildCustomizationHandlesLegacyNullBuckets(): void {

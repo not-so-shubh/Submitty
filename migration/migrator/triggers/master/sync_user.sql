@@ -46,6 +46,20 @@ CREATE OR REPLACE FUNCTION public.sync_user() RETURNS trigger
                     || 'user_updated=' || quote_literal(NEW.user_updated) || ', '
                     || 'instructor_updated=' || quote_literal(NEW.instructor_updated)
                 || ' WHERE user_id=' || quote_literal(NEW.user_id);
+                -- Courses can be migrated separately from master. Only reference the new
+                -- columns after the target schema is ready; the course migration backfills them.
+                query_string := query_string || format('; DO %L;', format($contact_sync$
+                BEGIN
+                    IF (SELECT count(*) FROM information_schema.columns
+                        WHERE table_schema = 'public' AND table_name = 'users'
+                        AND column_name IN ('linkedin_username', 'github_username', 'personal_webpage')) = 3 THEN
+                        EXECUTE %L;
+                    END IF;
+                END;
+                $contact_sync$, format(
+                    'UPDATE public.users SET linkedin_username=%L, github_username=%L, personal_webpage=%L WHERE user_id=%L',
+                    NEW.linkedin_username, NEW.github_username, NEW.personal_webpage, NEW.user_id
+                )));
                 -- Need to make sure that query_string was set properly as dblink_exec will happily take a null and then do nothing
                 IF query_string IS NULL THEN
                     RAISE EXCEPTION 'query_string error in trigger function sync_user()';

@@ -1,7 +1,7 @@
 /* exported updateUserPronouns, showUpdatePrefNameForm, showUpdateLastInitialFormatForm,
 showUpdatePronounsForm, showDisplayNameOrderForm, showUpdatePasswordForm, showUpdateProfilePhotoForm, showUpdateSecondaryEmailForm,
 updateUserPreferredNames, updateUserLastInitialFormat, updateUserProfilePhoto, updateUserSecondaryEmail, updateDisplayNameOrder,
-changeSecondaryEmail, previewUserLastInitialFormat, clearPronounsBox
+changeSecondaryEmail, previewUserLastInitialFormat, clearPronounsBox, showUpdateContactInfoForm, updateUserContactInfo
  */
 /* global displaySuccessMessage, displayErrorMessage, buildUrl, showPopup, closePopup, csrfToken, updateSidebarPreference, CollapseSidebarOnNarrowView, DisableAutomaticCollapse,
     updateTheme, displayWarningMessage */
@@ -338,6 +338,46 @@ function updateUserProfilePhoto() {
     // hide the modal and restore document scrolling
     closePopup('edit-profile-photo-form');
     $('#user-image-button').val(null);
+    return false;
+}
+
+function showUpdateContactInfoForm() {
+    $('.popup-form').css('display', 'none');
+    showPopup('#edit-contact-info-form');
+    $('#linkedin-username-change').focus();
+}
+
+function updateUserContactInfo() {
+    const data = new FormData();
+    data.append('csrf_token', csrfToken);
+    for (const field of ['linkedin_username', 'github_username', 'personal_webpage']) {
+        data.append(field, $(`#${field.replaceAll('_', '-')}-change`).val());
+    }
+    $.ajax({
+        url: buildUrl(['user_profile', 'change_contact_info']),
+        type: 'POST',
+        data,
+        processData: false,
+        contentType: false,
+        success: function (res) {
+            const response = JSON.parse(res);
+            if (response.status === 'success') {
+                for (const [field, value] of Object.entries(response.data)) {
+                    const id = field.replaceAll('_', '-');
+                    $(`#${id}-row .contact-value`).text(value);
+                    $(`#${id}-change`).val(value);
+                }
+                closePopup('edit-contact-info-form');
+                displaySuccessMessage('Contact information updated successfully');
+            }
+            else {
+                displayErrorMessage(response.message);
+            }
+        },
+        error: function () {
+            displayErrorMessage('Something went wrong while updating contact information.');
+        },
+    });
     return false;
 }
 

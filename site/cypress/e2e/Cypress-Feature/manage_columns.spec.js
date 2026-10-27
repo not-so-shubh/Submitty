@@ -19,6 +19,34 @@ describe('Manage Students: column toggles', () => {
         cy.visit(['sample', 'users']);
     });
 
+    it('hides contact columns by default and toggles each independently', () => {
+        const columns = ['linkedin-username', 'github-username', 'personal-webpage'];
+        columns.forEach((column) => {
+            cy.get(`[data-testid="${column}-td"]`).should('not.exist');
+        });
+        columns.forEach((column) => {
+            cy.get('[data-testid="toggle-columns"]').click();
+            cy.contains('All Off').click();
+            cy.get(`[data-testid="toggle-${column}"]`).check();
+            saveStudentColumns();
+            cy.get(`[data-testid="${column}-td"]`).should('exist');
+            columns.filter((other) => other !== column).forEach((other) => {
+                cy.get(`[data-testid="${other}-td"]`).should('not.exist');
+            });
+        });
+    });
+
+    it('retains the previous 16 column preferences with contact columns off', () => {
+        const previous = '0-1-0-1-0-1-0-1-0-1-0-1-0-1-0-1';
+        cy.setCookie('active_student_columns', previous);
+        cy.reload();
+        cy.get('[data-testid="registration-subsection-td"]').should('exist');
+        cy.getCookie('active_student_columns').its('value').should('equal', `${previous}-0-0-0`);
+        cy.get('[data-testid="linkedin-username-td"]').should('not.exist');
+        cy.get('[data-testid="github-username-td"]').should('not.exist');
+        cy.get('[data-testid="personal-webpage-td"]').should('not.exist');
+    });
+
     it('always shows User ID and Edit Student, and hides Registration Subsection by default', () => {
         cy.get('[data-testid="student-id-td"]').should('exist');
         cy.get('[data-testid="edit-student-td"]').should('exist');

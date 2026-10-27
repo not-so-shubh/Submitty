@@ -1,0 +1,92 @@
+[
+    {
+        "name": "hyphen names and emails",
+        "code": "user",
+        "user": {
+            "user_id": "-jane",
+            "given_name": "-Jane",
+            "family_name": "-Doe",
+            "email": "-jane@example.com",
+            "secondary_email": "+jane@example.com",
+            "reg_section": "-section",
+            "reg_subsection": "-subsection",
+            "group": "Student",
+            "linkedin_username": "fictional-linkedin",
+            "github_username": "fictional-code",
+            "personal_webpage": "https://example.com/?a=1&b=2"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group,LinkedIn Username,GitHub Username,Personal Webpage,CSV Encoding\n'-Jane,'-Doe,'-jane,'-jane@example.com,'+jane@example.com,,,\"'-section\",\"'-subsection\",,Student,fictional-linkedin,fictional-code,https://example.com/?a=1&b=2,apostrophe-v1\n"
+    },
+    {
+        "name": "literal apostrophes",
+        "code": "user",
+        "user": {
+            "user_id": "-jane",
+            "given_name": "'-Jane",
+            "family_name": "''Doe",
+            "email": "'=jane@example.com",
+            "secondary_email": "''jane@example.com",
+            "reg_section": "-section",
+            "reg_subsection": "-subsection",
+            "group": "Student",
+            "linkedin_username": "fictional-linkedin",
+            "github_username": "fictional-code",
+            "personal_webpage": "https://example.com/?a=1&b=2"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group,LinkedIn Username,GitHub Username,Personal Webpage\n'-Jane,''Doe,'-jane,'=jane@example.com,''jane@example.com,,,\"'-section\",\"'-subsection\",,Student,fictional-linkedin,fictional-code,https://example.com/?a=1&b=2\n"
+    },
+    {
+        "name": "mixed hyphen and apostrophes",
+        "code": "user",
+        "user": {
+            "user_id": "-jane",
+            "given_name": "-Jane",
+            "family_name": "'-Doe",
+            "email": "'+jane@example.com",
+            "secondary_email": "'=jane@example.com",
+            "reg_section": "-section",
+            "reg_subsection": "-subsection",
+            "group": "Student",
+            "linkedin_username": "fictional-linkedin",
+            "github_username": "fictional-code",
+            "personal_webpage": "https://example.com/?a=1&b=2"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group,LinkedIn Username,GitHub Username,Personal Webpage,CSV Encoding\n'-Jane,''-Doe,'-jane,''+jane@example.com,''=jane@example.com,,,\"'-section\",\"'-subsection\",,Student,fictional-linkedin,fictional-code,https://example.com/?a=1&b=2,apostrophe-v1\n"
+    },
+    {
+        "name": "formula-leading emails",
+        "code": "user",
+        "user": {
+            "user_id": "-jane",
+            "given_name": "Jane",
+            "family_name": "Doe",
+            "email": "=jane@example.com",
+            "secondary_email": "+jane@example.com",
+            "reg_section": "-section",
+            "reg_subsection": "-subsection",
+            "group": "Student",
+            "linkedin_username": "fictional-linkedin",
+            "github_username": "fictional-code",
+            "personal_webpage": "https://example.com/?a=1&b=2"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group,LinkedIn Username,GitHub Username,Personal Webpage,CSV Encoding\nJane,Doe,'-jane,'=jane@example.com,'+jane@example.com,,,\"'-section\",\"'-subsection\",,Student,fictional-linkedin,fictional-code,https://example.com/?a=1&b=2,apostrophe-v1\n"
+    },
+    {
+        "name": "grader hyphen and apostrophes",
+        "code": "grader",
+        "user": {
+            "user_id": "-jane",
+            "given_name": "-Jane",
+            "family_name": "'-Doe",
+            "email": "-jane@example.com",
+            "secondary_email": "'+jane@example.com",
+            "reg_section": "-section,other",
+            "reg_subsection": "-subsection",
+            "group": "Full Access Grader (Grad TA)",
+            "linkedin_username": "fictional-linkedin",
+            "github_username": "fictional-code",
+            "personal_webpage": "https://example.com/?a=1&b=2"
+        },
+        "csv": "Given Name,Family Name,User ID,Email,Secondary Email,UTC Offset,Time Zone,Registration Section,Registration Subsection,Rotation Section,Group,CSV Encoding\n'-Jane,''-Doe,'-jane,'-jane@example.com,''+jane@example.com,,,\"'-section,other\",\"'-subsection\",,Full Access Grader (Grad TA),apostrophe-v1\n"
+    }
+]

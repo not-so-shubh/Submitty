@@ -47,8 +47,12 @@ describe('Test cases revolving around uploading a classlist on the Manage Studen
 
         // An earlier download leaves a file at the same path, so retry the read until the new one matches
         cy.readFile(`${FIXTURE_PATH}/${filePath}`).then((expectedCsv) => {
+            // Keep the legacy fixtures usable as upload inputs, while checking every exported column.
+            const expected = normalize(expectedCsv).split('\n').map((row, index) => index === 0
+                ? `${row},LinkedIn Username,GitHub Username,Personal Webpage`
+                : `${row},,,`).join('\n');
             cy.readFile(downloadedFilePath).should((downloadedCsv) => {
-                expect(normalize(downloadedCsv)).to.equal(normalize(expectedCsv));
+                expect(normalize(downloadedCsv)).to.equal(expected);
             });
         });
     }

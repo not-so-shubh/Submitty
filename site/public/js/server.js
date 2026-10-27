@@ -681,31 +681,43 @@ function downloadCSV(code) {
         { header: 'Rotation Section', key: 'rot_section' },
         { header: 'Group', key: 'group' },
     ];
+    if (code === 'user') {
+        columns.push(
+            { header: 'LinkedIn Username', key: 'linkedin_username' },
+            { header: 'GitHub Username', key: 'github_username' },
+            { header: 'Personal Webpage', key: 'personal_webpage' },
+        );
+    }
 
-    // Generate the CSV header row
-    let csv_data = `${columns.map((col) => col.header).join(',')}\n`;
     const required_user_id = [];
+    const selected_users = [];
+    const formula_prefix = /^[\s\p{Cc}]*[=+@-]|^[\t\r\n]/u;
 
     // formats a single user into a CSV row
-    const generateRow = (user) => {
+    const generateRow = (user, encode_apostrophes) => {
         return `${columns.map((col) => {
-            let val = user[col.key];
+            let val = col.value ?? user[col.key];
 
             if (val === undefined || val === null) {
                 val = '';
             }
 
-            if (col.quote || (typeof val === 'string' && val.includes(','))) {
-                return `"${val}"`;
+            val = String(val);
+            // Quoting alone does not stop spreadsheet programs interpreting a formula.
+            if (formula_prefix.test(val) || (encode_apostrophes && val.startsWith('\''))) {
+                val = `'${val}`;
+            }
+            if (col.quote || /[",\r\n]/u.test(val)) {
+                return `"${val.replace(/"/g, '""')}"`;
             }
             return val;
         }).join(',')}\n`;
     };
 
-    // adds a user to the CSV string only if they haven't been added yet
+    // Select each user once, even when multiple checked filters match.
     const addUserToCSV = (user) => {
         if ($.inArray(user.user_id, required_user_id) === -1) {
-            csv_data += generateRow(user);
+            selected_users.push(user);
             required_user_id.push(user.user_id);
         }
     };
@@ -738,6 +750,21 @@ function downloadCSV(code) {
             }
         }
     });
+
+    // Mark reversible escaping only when a name/email needs spreadsheet protection.
+    // Original leading apostrophes are escaped too, so the importer never has to guess.
+    const encode_apostrophes = selected_users.some((user) =>
+        ['given_name', 'family_name', 'email', 'secondary_email'].some((key) =>
+            formula_prefix.test(String(user[key] ?? '')),
+        ),
+    );
+    if (encode_apostrophes) {
+        columns.push({ header: 'CSV Encoding', value: 'apostrophe-v1' });
+    }
+    let csv_data = `${columns.map((col) => col.header).join(',')}\n`;
+    for (const user of selected_users) {
+        csv_data += generateRow(user, encode_apostrophes);
+    }
 
     // Setup default name for the CSV file
     const course = $('#download_info_json_id').data('course');

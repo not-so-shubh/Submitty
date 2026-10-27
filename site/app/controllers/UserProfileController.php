@@ -34,14 +34,16 @@ class UserProfileController extends AbstractController {
     #[Route("/user_profile", methods: ["GET"])]
     public function showUserProfile(): MultiResponse {
         $this->core->getOutput()->addBreadcrumb("My Profile");
+        $user = $this->core->getUser();
         return new MultiResponse(
             null,
             new WebResponse(
                 ['UserProfile'],
                 'showUserProfile',
-                $this->core->getUser(),
+                $user,
                 $this->core->getAuthentication() instanceof DatabaseAuthentication,
-                $this->core->getCsrfToken()
+                $this->core->getCsrfToken(),
+                $this->core->getQueries()->hasStudentEnrollment($user->getId())
             )
         );
     }
@@ -304,6 +306,36 @@ class UserProfileController extends AbstractController {
                 ]);
             }
         }
+    }
+
+    #[Route("/user_profile/change_contact_info", methods: ["POST"])]
+    public function changeContactInfo(): JsonResponse {
+        $user = $this->core->getUser();
+        if (!$this->core->getQueries()->hasStudentEnrollment($user->getId())) {
+            return JsonResponse::getErrorResponse('Contact information requires a recorded student enrollment.');
+        }
+        $fields = [
+            'linkedin_username' => 'LinkedIn username must contain 3-100 letters, numbers, or internal hyphens.',
+            'github_username' => 'GitHub username must contain 1-39 letters or numbers, with single internal hyphens.',
+            'personal_webpage' => 'Personal webpage must be a valid HTTP or HTTPS URL without login credentials (up to 2048 characters).'
+        ];
+        $values = [];
+        foreach ($fields as $field => $error) {
+            if (!isset($_POST[$field]) || !is_string($_POST[$field])) {
+                return JsonResponse::getErrorResponse('All contact information fields must be provided as text. Leave a field empty to remove it.');
+            }
+            $values[$field] = trim($_POST[$field]);
+            if (!User::validateUserData($field, $values[$field])) {
+                return JsonResponse::getErrorResponse($error);
+            }
+        }
+
+        // Profile updates always apply to the authenticated user, never a submitted user ID.
+        $user->setLinkedinUsername($values['linkedin_username']);
+        $user->setGithubUsername($values['github_username']);
+        $user->setPersonalWebpage($values['personal_webpage']);
+        $this->core->getQueries()->updateUserContactInfo($user);
+        return JsonResponse::getSuccessResponse($values);
     }
 
     #[Route("/user_profile/change_secondary_email", methods: ["POST"])]

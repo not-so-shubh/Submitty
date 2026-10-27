@@ -1,0 +1,39 @@
+{% extends 'generic/Popup.twig' %}
+{% block popup_id %}edit-contact-info-form{% endblock %}
+{% block title %}Edit Contact Information (Optional){% endblock %}
+{% block body %}
+    <p class="std-margin">You can optionally share your LinkedIn profile, GitHub account, or personal website with your instructors. These links can help instructors stay in touch with you and follow your work after your courses end.</p>
+    <p class="std-margin"><strong>Instructors from all your past, present, and future courses may access this information.</strong></p>
+    <p class="std-margin">All fields are optional. You can update your information at any time or leave a field empty to remove it.</p>
+    <div class="flex-col">
+        <div class="edit_user_row">
+            <label for="linkedin-username-change">LinkedIn Username:</label>
+            <input type="text" id="linkedin-username-change" name="linkedin_username"
+                   value="{{ user.getLinkedinUsername() }}" maxlength="100" pattern="[a-zA-Z0-9][a-zA-Z0-9\-]{1,98}[a-zA-Z0-9]"
+                   aria-describedby="linkedin-username-help"/>
+        </div>
+        <p class="std-margin" id="linkedin-username-help">Enter the identifier after https://www.linkedin.com/in/ (3-100 letters, numbers, or internal hyphens).</p>
+        <div class="edit_user_row">
+            <label for="github-username-change">GitHub Username:</label>
+            <input type="text" id="github-username-change" name="github_username"
+                   value="{{ user.getGithubUsername() }}" maxlength="39" pattern="[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*"
+                   aria-describedby="github-username-help"/>
+        </div>
+        <p class="std-margin" id="github-username-help">Enter your username, without https://github.com/ (1-39 letters or numbers, with single internal hyphens).</p>
+        <div class="edit_user_row">
+            <label for="personal-webpage-change">Personal Webpage:</label>
+            <input type="url" id="personal-webpage-change" name="personal_webpage"
+                   value="{{ user.getPersonalWebpage() }}" maxlength="2048" pattern="[hH][tT][tT][pP][sS]?://.*"
+                   placeholder="https://example.com"/>
+        </div>
+    </div>
+{% endblock %}
+{% block form %}
+    <form method="post" onsubmit="return updateUserContactInfo()">
+        {{ parent() }}
+    </form>
+{% endblock %}
+{% block buttons %}
+    {{ block('close_button') }}
+    <input class="btn btn-primary" type="submit" value="Submit"/>
+{% endblock %}

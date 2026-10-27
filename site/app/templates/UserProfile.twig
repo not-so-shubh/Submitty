@@ -135,6 +135,26 @@
                     {% endif %}
                 </div>
             </div>
+            {% if can_edit_contact_info %}
+                <div class="user-info-cont" id="contact-information">
+                    <div class="user-info-title">
+                        <span>Contact Information (Optional)</span>
+                        <button class="icon" type="button" tabindex="0" id="edit-contact-info-button" data-testid="edit-contact-info-button"
+                                onclick="showUpdateContactInfoForm()" aria-label="Edit contact information" title="Edit contact information" aria-controls="edit-contact-info-form">
+                            <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <p class="std-margin">Share your professional profiles or portfolio to help instructors stay in touch.</p>
+                    <div class="user-info">
+                        {% for field, label in {'linkedin_username': 'LinkedIn Username', 'github_username': 'GitHub Username', 'personal_webpage': 'Personal Webpage'} %}
+                            <div class="flex-row" id="{{ field|replace({'_': '-'}) }}-row">
+                                <span class="label">{{ label }}:</span>
+                                <span class="value contact-value">{{ attribute(user, 'get' ~ field|split('_')|map(part => part|capitalize)|join('')) }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
             <div class="user-info-cont">
                 <div class="user-info-title">
                    <span id="time_zone_selector_label"
@@ -247,6 +267,9 @@
 {% include 'EditLastInitialFormatForm.twig' %}
 {% include 'EditProfilePhotoForm.twig' %}
 {% include 'EditSecondaryEmailForm.twig' %}
+{% if can_edit_contact_info %}
+    {% include 'EditContactInfoForm.twig' %}
+{% endif %}
 {% include 'EditPronounsForm.twig' %}
 {% include 'EditDisplayNameOrderForm.twig' %}
 {% if show_change_password %}
